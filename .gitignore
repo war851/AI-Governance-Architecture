@@ -1,0 +1,44 @@
+# Level 5 personal override — create your own from the template in docs/claude-code-configuration-guide.md
+CLAUDE.local.md
+.claude/settings.local.json
+
+
+# Environment files
+.env
+.env.*
+.env.local
+
+# Secrets
+secrets/
+*.pem
+*.key
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor state
+.vscode/settings.json
+.idea/
+
+# Dependencies (populated per project)
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build output (populated per project)
+dist/
+build/
+.next/
+out/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*

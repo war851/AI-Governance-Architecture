@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Governed AI Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #050505;
+      color: #f5f5f5;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    ::selection { background: rgba(16,185,129,0.3); color: #a7f3d0; }
+    h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.1); }
+    .text-gradient {
+      background: linear-gradient(135deg, #34d399, #2dd4bf, #22d3ee);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes glow { 0%, 100% { box-shadow: 0 0 40px -10px rgba(16,185,129,0.3); } 50% { box-shadow: 0 0 80px -10px rgba(16,185,129,0.5); } }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    #root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ═══════════════════════════════════════════
+    // ICONS
+    // ═══════════════════════════════════════════
+
+    function Icon({ name, size = 18, color = "currentColor" }) {
+      const p = {
+        width: size, height: size, viewBox: "0 0 24 24",
+        fill: "none", stroke: color, strokeWidth: "1.5",
+        strokeLinecap: "round", strokeLinejoin: "round",
+        style: { flexShrink: 0, display: "block" },
+      };
+      switch (name) {
+        case "cpu": return <svg {...p}><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M1 9h3"/><path d="M1 15h3"/><path d="M20 9h3"/><path d="M20 15h3"/></svg>;
+        case "list": return <svg {...p}><path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/><circle cx="4" cy="6" r="1.5" fill={color} stroke="none"/><circle cx="4" cy="12" r="1.5" fill={color} stroke="none"/><circle cx="4" cy="18" r="1.5" fill={color} stroke="none"/></svg>;
+        case "graduation": return <svg {...p}><path d="M22 10v6"/><path d="M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg>;
+        case "message": return <svg {...p}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>;
+        case "brackets": return <svg {...p}><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>;
+        case "target": return <svg {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>;
+        case "layers": return <svg {...p}><path d="M12 2L2 7l10 5 10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>;
+        case "filetext": return <svg {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>;
+        case "shield": return <svg {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>;
+        case "database": return <svg {...p}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>;
+        case "folder": return <svg {...p}><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>;
+        case "sparkles": return <svg {...p}><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 15l.88 2.12L22 18l-2.12.88L19 21l-.88-2.12L16 18l2.12-.88z"/></svg>;
+        case "refresh": return <svg {...p}><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10"/><path d="M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>;
+        case "link": return <svg {...p}><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>;
+        case "clock": return <svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
+        case "shieldcheck": return <svg {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+        case "map": return <svg {...p}><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16"/><path d="M16 6v16"/></svg>;
+        case "microscope": return <svg {...p}><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 100-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 01-2-2V6h6v4a2 2 0 01-2 2z"/><path d="M12 6V3a1 1 0 00-1-1H9a1 1 0 00-1 1v3"/></svg>;
+        case "flask": return <svg {...p}><path d="M9 3h6"/><path d="M10 9V3h4v6l5 8.5a1.5 1.5 0 01-1.3 2.5H6.3a1.5 1.5 0 01-1.3-2.5L10 9z"/></svg>;
+        case "columns": return <svg {...p}><path d="M12 2L2 7l10 5 10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>;
+        case "terminal": return <svg {...p}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8l4 4-4 4"/><path d="M14 16h4"/></svg>;
+        case "clipboard": return <svg {...p}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>;
+        case "keyboard": return <svg {...p}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M18 12h.01"/><path d="M8 16h8"/></svg>;
+        case "mail": return <svg {...p}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>;
+        case "save": return <svg {...p}><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>;
+        default: return <svg {...p}><circle cx="12" cy="12" r="10"/></svg>;
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    // DATA
+    // ═══════════════════════════════════════════
+
+    const ELEMENTS = {
+      orchestrator: { name: "Orchestrator", subtitle: "Stateless Workflow Engine", color: "#38bdf8", icon: "cpu", detail: "A state machine, not an LLM. Follows the DB-defined sequence: load context, build prompt, execute, store. Never improvises." },
+      steps: { name: "Steps Table", subtitle: "Sequence & Rules", color: "#f59e0b", icon: "list", detail: "The ordered process. Each step has prerequisites, visibility, and a linked function. Change a row, change the process \u2014 no code, no redeployment." },
+      skills: { name: "Skills Table", subtitle: "Methodology", color: "#f59e0b", icon: "graduation", detail: "Runtime-swappable methodology. Defines how the LLM approaches a task \u2014 the lens, not the task. Swap a row, change the behaviour. Don\u2019t train \u2014 certify." },
+      messages: { name: "Messages Table", subtitle: "Static Prompts", color: "#f59e0b", icon: "message", detail: "Every message lives in the DB. Change tone, language, or instructions by updating a row. No hardcoded strings, fully auditable." },
+      functions: { name: "Functions Registry", subtitle: "I/O Schema", color: "#f59e0b", icon: "brackets", detail: "Each function is typed (code, code+LLM, or sub-agent) with defined I/O schemas. The LLM never decides what to call \u2014 the step defines it." },
+      session: { name: "Session State", subtitle: "Current Context", color: "#34d399", icon: "target", detail: "Tracks position and progress. The orchestrator resumes from DB state, not from memory. No context window dependency." },
+      datasets: { name: "Dataset Tables", subtitle: "Step Outputs", color: "#34d399", icon: "layers", detail: "Output of step N = input of step N+1. Each step writes structured data. Data evolution \u2014 the value chain made explicit." },
+      chat: { name: "Chat Transcript", subtitle: "Full History", color: "#60a5fa", icon: "filetext", detail: "Full history, persisted with step_id. Reloaded into each prompt. Nothing lives only in the context window." },
+      audit: { name: "Audit Log", subtitle: "Execution Trace", color: "#60a5fa", icon: "shield", detail: "Every prompt sent, every response received, every step. Reconstructable at any point. Your compliance evidence." },
+      database: { name: "Governed Database", subtitle: "Single Source of Truth", color: "#a78bfa", icon: "database", detail: "All config, data, and history \u2014 one database. Local, standalone, LLM-agnostic. Postgres, SQLite, MySQL \u2014 the schema is what matters." },
+      files: { name: "File Storage", subtitle: "Buckets & Docs", color: "#fbbf24", icon: "folder", detail: "Documents stored in buckets, linked to sessions and steps. Loaded into prompt context when the step needs them." },
+      llm: { name: "LLM", subtitle: "Stateless Compute", color: "#f97316", icon: "sparkles", detail: "Receives a constrained prompt, returns structured output. Never decides what happens next. Swap the provider \u2014 nothing else changes." },
+      loop: { name: "Orchestration Loop", subtitle: "Load \u2192 Build \u2192 Execute \u2192 Store", color: "#c084fc", icon: "refresh", detail: "Four steps per interaction. 9 prompt layers assembled from DB state. Every LLM call constrained and testable." },
+    };
+
+    const SKILL_ICONS = { vcm: "map", de: "microscope", tdd: "flask", ga: "columns", cc: "terminal" };
+    const GOV_ICONS = { "design-md": "clipboard", "claude-md": "keyboard", "envelope": "mail", "lifecycle": "refresh", "file-structure": "folder" };
+    const PRINCIPLE_ICONS = ["database", "shield", "link", "flask", "save", "refresh"];
+
+    const SKILLS = [
+      {
+        id: "vcm",
+        name: "Value Chain Mapping",
+        layer: "application",
+        color: "#f59e0b",
+        tagline: "Map the process before designing the solution",
+        type: "Discovery & Interview",
+        produces: [
+          "Value Chain Map \u2014 ordered steps from first input to final output",
+          "Step Specifications \u2014 intention, I/O, completion criteria, love, hate",
+          "Stakeholder Register \u2014 who informed what, who to talk to next",
+          "Gap Log \u2014 what\u2019s unknown, drives the next session",
+        ],
+        consumes: ["Stakeholder knowledge", "Existing documentation (if any)"],
+        questions: [
+          "What are we building?",
+          "How does it work end to end?",
+          "What is the intention of this step?",
+          "What do you love? What do you hate?",
+        ],
+      },
+      {
+        id: "de",
+        name: "Data Evolution",
+        layer: "application",
+        color: "#a78bfa",
+        tagline: "See how your data transforms, field by field",
+        type: "Design & Visualization",
+        produces: [
+          "Data Evolution Diagram \u2014 Mermaid flow of transformations",
+          "Data State Diagram \u2014 field shapes at each stage",
+          "Data Evolution Table \u2014 field-level lineage per stage",
+          "Transformation Audit \u2014 is each transformation necessary?",
+          "Schema Derivation \u2014 tables and columns that emerge from the flow",
+        ],
+        consumes: ["Step Specifications (from Value Chain Mapping)", "Domain knowledge about data"],
+        questions: [
+          "What fields enter at this stage?",
+          "How does each field transform?",
+          "Is this transformation necessary?",
+          "What does the data look like here?",
+        ],
+      },
+      {
+        id: "tdd",
+        name: "TDD Golden Examples",
+        layer: "application",
+        color: "#f472b6",
+        tagline: "If you can\u2019t test it, you haven\u2019t defined it",
+        type: "Testing Methodology",
+        produces: [
+          "Golden Example Sets \u2014 concrete input + evaluation criteria per function",
+          "Test Specifications \u2014 how to run, what passes, isolation rules",
+          "Evaluation Rubrics \u2014 faithfulness, completeness, structure criteria",
+        ],
+        consumes: ["Step Specifications (intention, I/O, completion criteria)", "Data Evolution Map (field transformations)"],
+        questions: [
+          "What must be true about the output?",
+          "What must NOT be in the output?",
+          "What happens with missing data?",
+          "Is this criterion binary \u2014 met or not met?",
+        ],
+      },
+      {
+        id: "ga",
+        name: "Governed Architecture",
+        layer: "methodology",
+        color: "#34d399",
+        tagline: "Structure beats intelligence. Configure, don\u2019t train",
+        type: "Design Methodology",
+        produces: [
+          "Steps Table \u2014 ordered process with prerequisites",
+          "Edge Functions \u2014 typed (code / code+LLM / sub-agent) with I/O schemas",
+          "Skills Config \u2014 methodology loaded at runtime, swappable",
+          "Static Messages \u2014 all user-facing text in DB",
+          "Orchestrator Design \u2014 state machine loop",
+        ],
+        consumes: [
+          "Value Chain Map (step sequence)",
+          "Step Specifications (intentions, I/O)",
+          "Data Evolution Map (schema, field lineage)",
+          "Golden Examples (test contracts per function)",
+        ],
+        questions: [
+          "Is this step code, code+LLM, or sub-agents?",
+          "Does the DB own this decision, or the LLM?",
+          "Is every LLM call constrained and testable?",
+          "Can we reconstruct every prompt from DB state?",
+        ],
+      },
+      {
+        id: "cc",
+        name: "Claude Code Environment",
+        layer: "foundation",
+        color: "#60a5fa",
+        tagline: "The configured development environment",
+        type: "Foundation",
+        produces: [
+          "CLAUDE.md \u2014 project memory, coding standards, compounding engineering",
+          "Rules \u2014 modular, path-scoped behavioural constraints",
+          "Commands \u2014 /plan, /review, /learn slash workflows",
+          "Agents \u2014 code-reviewer, planner sub-workers",
+          "Settings \u2014 permissions, hooks, safety guards",
+        ],
+        consumes: ["Boris\u2019s best practices", "Anthropic configuration cascade"],
+        questions: [
+          "Where does this config belong in the 5-level cascade?",
+          "Is this a Cursor concern or a Claude Code concern?",
+          "Does the compounding engineering loop apply?",
+        ],
+      },
+    ];
+
+    const PRINCIPLES = [
+      { num: 1, text: "DB owns the process, LLM is the semantic engine" },
+      { num: 2, text: "Don\u2019t train \u2014 certify" },
+      { num: 3, text: "Data evolution is the value chain" },
+      { num: 4, text: "Every LLM call is constrained and testable" },
+      { num: 5, text: "Everything is stored" },
+      { num: 6, text: "LLM-agnostic" },
+    ];
+
+    const GOVERNANCE_ITEMS = [
+      {
+        id: "design-md",
+        name: "DESIGN.md",
+        color: "#94a3b8",
+        type: "Application Design Index",
+        tagline: "The single index for all design artifacts",
+        governs: [
+          "Tracks all design artifacts and their status",
+          "Skills produce artifacts \u2192 register here",
+          "Single index \u2014 read this to know project state",
+          "Confirmed artifacts become implementation input",
+        ],
+        receives: [
+          "Artifact registrations from all 4 application skills",
+          "Status updates as artifacts mature through sessions",
+        ],
+      },
+      {
+        id: "claude-md",
+        name: "CLAUDE.md",
+        color: "#60a5fa",
+        type: "Code Development Memory",
+        tagline: "Project memory and coding governance",
+        governs: [
+          "Project memory, coding standards, commands",
+          "Rules, agents, hooks, settings, permissions",
+          "PLAN.md + TODO.md for implementation phases",
+          "Compounding engineering after every session",
+        ],
+        receives: [
+          "Confirmed design artifacts from DESIGN.md",
+          "Boris\u2019s best practices and Anthropic cascade",
+        ],
+      },
+      {
+        id: "envelope",
+        name: "Artifact Envelope",
+        color: "#f59e0b",
+        type: "YAML Frontmatter Standard",
+        tagline: "Every artifact is self-describing",
+        governs: [
+          "name \u2014 readable artifact name",
+          "artifact_type \u2014 one of the 17 types",
+          "skill \u2014 vcm, de, tdd, or ga",
+          "project, version, status, date",
+          "linked_artifacts \u2014 connections to other artifacts",
+        ],
+        receives: [
+          "Template defined in artifact-template.md",
+          "Values filled in by each skill during creation",
+        ],
+        yaml: true,
+      },
+      {
+        id: "lifecycle",
+        name: "Artifact Lifecycle",
+        color: "#34d399",
+        type: "Status Progression",
+        tagline: "From first conversation to implementation handoff",
+        governs: [
+          "draft \u2014 intention captured, sparse content",
+          "detailed \u2014 sections filled through conversation",
+          "confirmed \u2014 validated, ready for downstream use",
+        ],
+        receives: [
+          "Status set at creation (always starts as draft)",
+          "Status updated through iterative sessions",
+        ],
+        lifecycle: true,
+      },
+      {
+        id: "file-structure",
+        name: "File Structure",
+        color: "#a78bfa",
+        type: "Where Things Live",
+        tagline: "One place for skills, two governance files at root",
+        governs: [
+          ".claude/skills/ \u2014 all skills, templates, and configuration",
+          "DESIGN.md \u2014 application design index at project root",
+          "CLAUDE.md \u2014 code development memory at project root",
+          ".claude/rules/ \u2014 behavioural rules for code quality, git, planning",
+          ".cursor/rules/ \u2014 Cursor-specific patterns and conventions",
+        ],
+        receives: [
+          "Boris\u2019s best practices for the 5-level cascade",
+          "Cursor auto-imports skills from .claude/skills/",
+        ],
+      },
+    ];
+
+    function hexToRgb(hex) {
+      return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;
+    }
+
+    // ═══════════════════════════════════════════
+    // COMPONENTS
+    // ═══════════════════════════════════════════
+
+    function DBItem({ id, active, onClick }) {
+      const [hovered, setHovered] = useState(false);
+      const el = ELEMENTS[id];
+      const lit = active || hovered;
+
+      return (
+        <div
+          onClick={(e) => { e.stopPropagation(); onClick(id); }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "12px 16px",
+            background: active ? `rgba(${hexToRgb(el.color)},0.1)` : hovered ? `rgba(255,255,255,0.03)` : "transparent",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+          }}
+        >
+          <Icon name={el.icon} size={16} color={lit ? el.color : "rgba(255,255,255,0.3)"} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "14px", fontWeight: 500, color: lit ? "#f5f5f5" : "rgba(255,255,255,0.5)", transition: "color 0.3s" }}>
+              {el.name}
+            </div>
+          </div>
+          <div style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: lit ? el.color : "rgba(255,255,255,0.15)", transition: "color 0.3s", letterSpacing: "0.02em" }}>
+            {el.subtitle}
+          </div>
+        </div>
+      );
+    }
+
+    function ExternalCard({ id, active, onClick }) {
+      const [hovered, setHovered] = useState(false);
+      const el = ELEMENTS[id];
+      const lit = active || hovered;
+
+      return (
+        <div
+          onClick={() => onClick(id)}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "16px 20px",
+            background: active ? `rgba(${hexToRgb(el.color)},0.08)` : "rgba(255,255,255,0.03)",
+            border: `1px solid ${active ? el.color + "40" : hovered ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)"}`,
+            borderRadius: "16px",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            flex: 1,
+          }}
+        >
+          <Icon name={el.icon} size={20} color={lit ? el.color : "rgba(255,255,255,0.3)"} />
+          <div>
+            <div style={{ fontSize: "15px", fontWeight: 500, color: lit ? "#f5f5f5" : "rgba(255,255,255,0.5)", transition: "color 0.3s" }}>
+              {el.name}
+            </div>
+            <div style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: lit ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.15)", transition: "color 0.3s", marginTop: "2px" }}>
+              {el.subtitle}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function DetailPanel({ id }) {
+      if (!id) return null;
+      const el = ELEMENTS[id];
+
+      return (
+        <div className="glass" style={{
+          padding: "32px",
+          borderRadius: "24px",
+          animation: "fadeInUp 0.3s ease",
+          alignSelf: "start",
+          position: "sticky",
+          top: "32px",
+          overflow: "hidden",
+        }}>
+          <div style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: "200px",
+            height: "200px",
+            background: `radial-gradient(circle, rgba(${hexToRgb(el.color)},0.12) 0%, transparent 70%)`,
+            transform: "translate(40%, -40%)",
+            pointerEvents: "none",
+          }} />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "4px 12px",
+              borderRadius: "999px",
+              background: `rgba(${hexToRgb(el.color)},0.1)`,
+              border: `1px solid rgba(${hexToRgb(el.color)},0.2)`,
+              marginBottom: "20px",
+            }}>
+              <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: el.color, animation: "pulse 2s ease infinite" }} />
+              <span className="mono" style={{ fontSize: "10px", color: el.color, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                {el.subtitle}
+              </span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
+              <div style={{
+                width: "48px", height: "48px", borderRadius: "14px",
+                background: `rgba(${hexToRgb(el.color)},0.15)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon name={el.icon} size={24} color={el.color} />
+              </div>
+              <h3 style={{ fontSize: "28px", fontWeight: 700, color: "#fff" }}>
+                {el.name}
+              </h3>
+            </div>
+
+            <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.5)", lineHeight: 1.8, fontWeight: 300 }}>
+              {el.detail}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    function LoopStep({ label, sublabel, color, active, lit }) {
+      const [hovered, setHovered] = useState(false);
+      const on = active || hovered || lit;
+      return (
+        <div
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            padding: "12px 14px",
+            background: lit ? `rgba(${hexToRgb(color)},0.15)` : on ? `rgba(${hexToRgb(color)},0.08)` : "rgba(255,255,255,0.02)",
+            border: `1px solid ${lit ? color + "50" : on ? color + "30" : "rgba(255,255,255,0.06)"}`,
+            borderRadius: "12px",
+            textAlign: "center",
+            flex: 1,
+            transition: "all 0.4s ease",
+            boxShadow: lit ? `0 0 24px -4px rgba(${hexToRgb(color)},0.35)` : "none",
+          }}
+        >
+          <div style={{ fontSize: "13px", fontWeight: 600, color: on ? color : "rgba(255,255,255,0.4)", transition: "color 0.4s" }}>{label}</div>
+          <div className="mono" style={{ fontSize: "9px", color: on ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.12)", marginTop: "4px", letterSpacing: "0.05em", transition: "color 0.4s" }}>{sublabel}</div>
+        </div>
+      );
+    }
+
+    function InteractiveCard({ item, isActive, onClick, compact }) {
+      const [hovered, setHovered] = useState(false);
+      const lit = isActive || hovered;
+      const iconName = SKILL_ICONS[item.id] || GOV_ICONS[item.id] || "cpu";
+      return (
+        <div
+          data-interactive="true"
+          onClick={() => onClick(item.id)}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            padding: compact ? "10px 14px" : "14px 18px",
+            background: isActive
+              ? `rgba(${hexToRgb(item.color)},0.08)`
+              : hovered
+                ? `rgba(${hexToRgb(item.color)},0.04)`
+                : "rgba(255,255,255,0.02)",
+            border: `1px solid ${isActive ? item.color + "40" : hovered ? item.color + "20" : "rgba(255,255,255,0.06)"}`,
+            borderRadius: "12px",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            flex: 1,
+            minWidth: compact ? "140px" : "200px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: compact ? "4px" : "6px" }}>
+            <div style={{
+              width: compact ? "24px" : "28px",
+              height: compact ? "24px" : "28px",
+              borderRadius: "8px",
+              background: lit ? `rgba(${hexToRgb(item.color)},0.12)` : "rgba(255,255,255,0.03)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.3s",
+            }}>
+              <Icon name={iconName} size={compact ? 12 : 14} color={lit ? item.color : "rgba(255,255,255,0.3)"} />
+            </div>
+            <div>
+              <div style={{
+                fontSize: compact ? "11px" : "13px",
+                fontWeight: 600,
+                color: isActive ? item.color : hovered ? "#f5f5f5" : "rgba(255,255,255,0.5)",
+                transition: "color 0.3s",
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}>
+                {item.name}
+              </div>
+              <div className="mono" style={{
+                fontSize: "9px",
+                color: lit ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.12)",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                transition: "color 0.3s",
+              }}>
+                {item.type}
+              </div>
+            </div>
+          </div>
+          {!compact && (
+            <div style={{
+              fontSize: "10px",
+              color: lit ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.2)",
+              fontStyle: "italic",
+              lineHeight: 1.5,
+              transition: "color 0.3s",
+              fontWeight: 300,
+            }}>
+              {item.tagline}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function SkillDetail({ skill }) {
+      if (!skill) return null;
+      const iconName = SKILL_ICONS[skill.id] || "cpu";
+      return (
+        <div data-interactive="true" className="glass" style={{
+          padding: "18px",
+          borderRadius: "12px",
+          animation: "fadeInUp 0.3s ease",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          <div style={{
+            position: "absolute", top: 0, right: 0, width: "160px", height: "160px",
+            background: `radial-gradient(circle, rgba(${hexToRgb(skill.color)},0.1) 0%, transparent 70%)`,
+            transform: "translate(40%, -40%)", pointerEvents: "none",
+          }} />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+            }}>
+              <div style={{
+                width: "32px", height: "32px", borderRadius: "10px",
+                background: `rgba(${hexToRgb(skill.color)},0.15)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon name={iconName} size={16} color={skill.color} />
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: skill.color, fontFamily: "'Space Grotesk', sans-serif" }}>{skill.name}</div>
+                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", marginTop: "1px", fontWeight: 300 }}>{skill.tagline}</div>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div>
+                <div className="mono" style={{ fontSize: "9px", fontWeight: 600, color: "#34d399", letterSpacing: "0.1em", marginBottom: "6px", textTransform: "uppercase" }}>Produces</div>
+                {skill.produces.map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "5px", fontSize: "10px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, fontWeight: 300 }}>
+                    <span style={{ color: "#34d399", flexShrink: 0, marginTop: "1px" }}>{"\u2192"}</span>{item}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="mono" style={{ fontSize: "9px", fontWeight: 600, color: "#f59e0b", letterSpacing: "0.1em", marginBottom: "6px", textTransform: "uppercase" }}>Consumes</div>
+                {skill.consumes.map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "5px", fontSize: "10px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, fontWeight: 300 }}>
+                    <span style={{ color: "#f59e0b", flexShrink: 0, marginTop: "1px" }}>{"\u2190"}</span>{item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginTop: "14px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="mono" style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", marginBottom: "6px", textTransform: "uppercase" }}>Key Questions This Skill Asks</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                {skill.questions.map((q, i) => (
+                  <div key={i} style={{
+                    fontSize: "10px", color: skill.color, padding: "4px 10px",
+                    background: `rgba(${hexToRgb(skill.color)},0.06)`,
+                    border: `1px solid rgba(${hexToRgb(skill.color)},0.15)`,
+                    borderRadius: "4px", fontStyle: "italic", fontWeight: 300,
+                  }}>{q}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function GovernanceDetail({ item }) {
+      if (!item) return null;
+      const iconName = GOV_ICONS[item.id] || "cpu";
+      return (
+        <div data-interactive="true" className="glass" style={{
+          padding: "18px",
+          borderRadius: "12px",
+          animation: "fadeInUp 0.3s ease",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          <div style={{
+            position: "absolute", top: 0, right: 0, width: "160px", height: "160px",
+            background: `radial-gradient(circle, rgba(${hexToRgb(item.color)},0.1) 0%, transparent 70%)`,
+            transform: "translate(40%, -40%)", pointerEvents: "none",
+          }} />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+            }}>
+              <div style={{
+                width: "32px", height: "32px", borderRadius: "10px",
+                background: `rgba(${hexToRgb(item.color)},0.15)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon name={iconName} size={16} color={item.color} />
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: item.color, fontFamily: "'Space Grotesk', sans-serif" }}>{item.name}</div>
+                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", marginTop: "1px", fontWeight: 300 }}>{item.tagline}</div>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div>
+                <div className="mono" style={{ fontSize: "9px", fontWeight: 600, color: "#34d399", letterSpacing: "0.1em", marginBottom: "6px", textTransform: "uppercase" }}>Governs</div>
+                {item.governs.map((line, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "5px", fontSize: "10px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, fontWeight: 300 }}>
+                    <span style={{ color: "#34d399", flexShrink: 0, marginTop: "1px" }}>{"\u2192"}</span>{line}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="mono" style={{ fontSize: "9px", fontWeight: 600, color: "#f59e0b", letterSpacing: "0.1em", marginBottom: "6px", textTransform: "uppercase" }}>Receives</div>
+                {item.receives.map((line, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "6px", marginBottom: "5px", fontSize: "10px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, fontWeight: 300 }}>
+                    <span style={{ color: "#f59e0b", flexShrink: 0, marginTop: "1px" }}>{"\u2190"}</span>{line}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {item.yaml && (
+              <div style={{ marginTop: "14px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="mono" style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", marginBottom: "6px", textTransform: "uppercase" }}>Example Frontmatter</div>
+                <div style={{
+                  padding: "10px 14px", background: "rgba(0,0,0,0.4)", borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", lineHeight: 1.8, color: "rgba(255,255,255,0.3)",
+                }}>
+                  <span style={{ color: "rgba(255,255,255,0.15)" }}>---</span><br/>
+                  <span style={{ color: "#f59e0b" }}>name</span>: <span style={{ color: "rgba(255,255,255,0.5)" }}>Candidate Interview Process</span><br/>
+                  <span style={{ color: "#f59e0b" }}>artifact_type</span>: <span style={{ color: "rgba(255,255,255,0.5)" }}>value-chain-map</span><br/>
+                  <span style={{ color: "#f59e0b" }}>skill</span>: <span style={{ color: "rgba(255,255,255,0.5)" }}>vcm</span><br/>
+                  <span style={{ color: "#f59e0b" }}>project</span>: <span style={{ color: "rgba(255,255,255,0.5)" }}>System 01</span><br/>
+                  <span style={{ color: "#f59e0b" }}>version</span>: <span style={{ color: "rgba(255,255,255,0.5)" }}>3</span><br/>
+                  <span style={{ color: "#f59e0b" }}>status</span>: <span style={{ color: "#34d399" }}>confirmed</span><br/>
+                  <span style={{ color: "#f59e0b" }}>date</span>: <span style={{ color: "rgba(255,255,255,0.5)" }}>2026-02-25</span><br/>
+                  <span style={{ color: "rgba(255,255,255,0.15)" }}>---</span>
+                </div>
+              </div>
+            )}
+
+            {item.lifecycle && (
+              <div style={{ marginTop: "14px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="mono" style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", marginBottom: "6px", textTransform: "uppercase" }}>Status Progression</div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  {["draft", "detailed", "confirmed"].map((status, i) => (
+                    <React.Fragment key={status}>
+                      <div style={{
+                        padding: "6px 14px", borderRadius: "6px",
+                        background: status === "confirmed" ? "rgba(52,211,153,0.08)" : status === "detailed" ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+                        color: status === "confirmed" ? "#34d399" : status === "detailed" ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+                        border: `1px solid ${status === "confirmed" ? "rgba(52,211,153,0.2)" : status === "detailed" ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.06)"}`,
+                        fontSize: "10px", fontWeight: 600, letterSpacing: "0.02em",
+                        fontFamily: "'Space Grotesk', sans-serif",
+                      }}>
+                        {status}
+                        <div style={{ fontSize: "8px", fontWeight: 300, marginTop: "2px", opacity: 0.7, fontFamily: "'Inter', sans-serif" }}>
+                          {status === "draft" ? "intention captured" : status === "detailed" ? "sections filled in" : "ready for handoff"}
+                        </div>
+                      </div>
+                      {i < 2 && <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.1)" }}>{"\u2192"}</div>}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function PyramidView({ activeSkill, onSelect }) {
+      const layers = [
+        { label: "Application Skills", sublabel: "create the product", skills: ["vcm", "de", "tdd"], bg: "rgba(245,158,11,0.02)", border: "#f59e0b" },
+        { label: "Design Methodology", sublabel: "how to architect", skills: ["ga"], bg: "rgba(52,211,153,0.02)", border: "#34d399" },
+        { label: "Development Environment", sublabel: "foundation", skills: ["cc"], bg: "rgba(96,165,250,0.02)", border: "#60a5fa" },
+      ];
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {layers.map((layer, li) => (
+            <div key={li} style={{
+              padding: "14px", background: layer.bg,
+              border: `1px solid rgba(${hexToRgb(layer.border)},0.1)`, borderRadius: "12px",
+              borderLeft: `3px solid ${layer.border}40`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: layer.border, letterSpacing: "-0.01em", fontFamily: "'Space Grotesk', sans-serif" }}>{layer.label}</div>
+                  <div className="mono" style={{ fontSize: "9px", color: "rgba(255,255,255,0.2)", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: "3px" }}>{layer.sublabel}</div>
+                </div>
+                {li === 0 && <div className="mono" style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)", padding: "4px 10px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px" }}>top of pyramid</div>}
+                {li === 2 && <div className="mono" style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)", padding: "4px 10px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px" }}>base</div>}
+              </div>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {layer.skills.map(sid => {
+                  const skill = SKILLS.find(s => s.id === sid);
+                  return <InteractiveCard key={sid} item={skill} isActive={activeSkill === sid} onClick={onSelect} compact={layer.skills.length > 1} />;
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function GovernanceView({ activeItem, onSelect }) {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {GOVERNANCE_ITEMS.map(item => (
+            <InteractiveCard key={item.id} item={item} isActive={activeItem === item.id} onClick={onSelect} compact={false} />
+          ))}
+        </div>
+      );
+    }
+
+    function FeedbackBlock() {
+      const [hovered, setHovered] = useState(false);
+      return (
+        <div
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            marginTop: "8px", padding: "12px 16px",
+            background: hovered ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+            border: `1px dashed ${hovered ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`,
+            borderRadius: "10px", display: "flex", alignItems: "center", gap: "12px",
+            transition: "all 0.3s ease",
+          }}
+        >
+          <div style={{
+            width: "32px", height: "32px", borderRadius: "10px",
+            background: hovered ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.02)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "all 0.3s",
+          }}>
+            <Icon name="refresh" size={16} color={hovered ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.15)"} />
+          </div>
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: 600, color: hovered ? "#f5f5f5" : "rgba(255,255,255,0.5)", transition: "color 0.3s", fontFamily: "'Space Grotesk', sans-serif" }}>Feedback Loops</div>
+            <div style={{ fontSize: "10px", color: hovered ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.25)", lineHeight: 1.6, marginTop: "4px", transition: "color 0.3s", fontWeight: 300 }}>
+              Data Evolution questions feed back to Value Chain Mapping.
+              TDD failures refine prompts and skill configs.
+              The Compounding Engineering loop applies across all skills.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function IOSummary() {
+      const [hovered, setHovered] = useState(false);
+      return (
+        <div
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            marginTop: "16px", padding: "16px 20px",
+            background: hovered ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+            border: `1px solid ${hovered ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)"}`,
+            borderRadius: "10px", textAlign: "center",
+            transition: "all 0.3s ease",
+          }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "16px", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 600, fontFamily: "'Space Grotesk', sans-serif" }}>Input</div>
+              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "4px", lineHeight: 1.5, fontWeight: 300 }}>Stakeholder knowledge<br/>and intention</div>
+            </div>
+            <div style={{ fontSize: "20px", color: hovered ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.08)", transition: "color 0.3s" }}>{"\u2192"}</div>
+            <div>
+              <div style={{ fontSize: "11px", color: "#34d399", fontWeight: 600, fontFamily: "'Space Grotesk', sans-serif" }}>Output</div>
+              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "4px", lineHeight: 1.5, fontWeight: 300 }}>DB-governed application<br/>with full test coverage</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ArtifactFlow({ activeConnection, onHover, onLeave }) {
+      const flowSteps = [
+        { id: "discover", skill: "vcm", label: "Discover", detail: "Interview stakeholders, drill down from intention to detail", artifacts: ["Value Chain Map", "Step Specs", "Gap Log"], color: "#f59e0b" },
+        { id: "visualize", skill: "de", label: "Visualize", detail: "Trace field-level data evolution, question each transformation", artifacts: ["Evolution Diagram", "State Diagram", "Schema Derivation"], color: "#a78bfa" },
+        { id: "test", skill: "tdd", label: "Test", detail: "Derive golden examples before writing code", artifacts: ["Golden Examples", "Test Specs", "Evaluation Rubrics"], color: "#f472b6" },
+        { id: "architect", skill: "ga", label: "Architect", detail: "Design DB-governed application from confirmed artifacts", artifacts: ["Steps Table", "Functions", "Skills Config", "Orchestrator"], color: "#34d399" },
+        { id: "build", skill: "cc", label: "Build", detail: "Implement in the configured development environment", artifacts: ["CLAUDE.md", "Rules", "Commands", "Hooks"], color: "#60a5fa" },
+      ];
+
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          {flowSteps.map((step, i) => {
+            const isActive = activeConnection === step.id;
+            const iconName = SKILL_ICONS[step.skill] || "cpu";
+            return (
+              <div key={step.id}>
+                <div
+                  onMouseEnter={() => onHover(step.id)}
+                  onMouseLeave={onLeave}
+                  style={{
+                    display: "grid", gridTemplateColumns: "70px 1fr auto", alignItems: "center", gap: "14px",
+                    padding: "12px 16px",
+                    background: isActive ? `rgba(${hexToRgb(step.color)},0.06)` : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${isActive ? `${step.color}40` : "rgba(255,255,255,0.06)"}`,
+                    borderRadius: "10px", cursor: "pointer", transition: "all 0.3s ease",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                    <div style={{
+                      width: "36px", height: "36px", borderRadius: "50%",
+                      background: isActive ? `rgba(${hexToRgb(step.color)},0.12)` : "rgba(255,255,255,0.03)",
+                      border: `2px solid ${isActive ? step.color : "rgba(255,255,255,0.08)"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "13px", fontWeight: 800, color: isActive ? step.color : "rgba(255,255,255,0.2)",
+                      transition: "all 0.3s", fontFamily: "'Space Grotesk', sans-serif",
+                    }}>{i + 1}</div>
+                    <div style={{ fontSize: "10px", fontWeight: 600, color: isActive ? step.color : "rgba(255,255,255,0.2)", letterSpacing: "-0.01em", transition: "color 0.3s", fontFamily: "'Space Grotesk', sans-serif" }}>{step.label}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: isActive ? "#f5f5f5" : "rgba(255,255,255,0.5)", marginBottom: "4px", transition: "color 0.3s", fontFamily: "'Space Grotesk', sans-serif" }}>
+                      {SKILLS.find(s => s.id === step.skill)?.name}
+                    </div>
+                    <div style={{ fontSize: "10px", color: isActive ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.2)", lineHeight: 1.5, transition: "color 0.3s", fontWeight: 300 }}>{step.detail}</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end" }}>
+                    {step.artifacts.map((a, j) => (
+                      <div key={j} className="mono" style={{
+                        fontSize: "10px", padding: "3px 10px", borderRadius: "8px",
+                        background: isActive ? `rgba(${hexToRgb(step.color)},0.1)` : "transparent",
+                        color: isActive ? step.color : "rgba(255,255,255,0.1)",
+                        border: `1px solid ${isActive ? `${step.color}30` : "transparent"}`,
+                        transition: "all 0.3s", whiteSpace: "nowrap",
+                      }}>{a}</div>
+                    ))}
+                  </div>
+                </div>
+                {i < flowSteps.length - 1 && (
+                  <div style={{ display: "flex", justifyContent: "center", padding: "2px 0" }}>
+                    <div style={{
+                      width: "1px", height: "14px",
+                      background: isActive ? `linear-gradient(180deg, ${step.color}, ${flowSteps[i+1].color})` : "rgba(255,255,255,0.06)",
+                      transition: "background 0.3s",
+                    }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          <FeedbackBlock />
+        </div>
+      );
+    }
+
+    function SkillEcosystemContent() {
+      const [subView, setSubView] = useState("pyramid");
+      const [activeSkill, setActiveSkill] = useState(null);
+      const [activeFlow, setActiveFlow] = useState(null);
+      const [activeGovernance, setActiveGovernance] = useState(null);
+      const [activePrinciple, setActivePrinciple] = useState(null);
+      const [hoveredPrinciple, setHoveredPrinciple] = useState(null);
+      const lldRef = React.useRef(null);
+
+      const selectedSkill = SKILLS.find(s => s.id === activeSkill) || null;
+      const selectedGovernance = GOVERNANCE_ITEMS.find(g => g.id === activeGovernance) || null;
+
+      useEffect(() => {
+        function onDocClick(e) {
+          if (lldRef.current && lldRef.current.contains(e.target) && !e.target.closest("[data-interactive]")) {
+            setActiveSkill(null);
+            setActiveGovernance(null);
+            setActivePrinciple(null);
+            setActiveFlow(null);
+          }
+        }
+        document.addEventListener("click", onDocClick);
+        return () => document.removeEventListener("click", onDocClick);
+      }, []);
+
+      return (
+        <div ref={lldRef} style={{ animation: "fadeInUp 0.4s ease" }}>
+          <div style={{
+            display: "inline-flex", gap: "2px", justifyContent: "center", marginBottom: "24px",
+            background: "rgba(255,255,255,0.03)", borderRadius: "12px", padding: "4px",
+            border: "1px solid rgba(255,255,255,0.08)", width: "100%",
+          }}>
+            {[
+              { id: "pyramid", label: "The Pyramid", desc: "skill hierarchy" },
+              { id: "flow", label: "The Flow", desc: "artifact pipeline" },
+              { id: "governance", label: "The Governance", desc: "artifact governance" },
+              { id: "principles", label: "The Constitution", desc: "6 rules" },
+            ].map(v => (
+              <button
+                key={v.id}
+                data-interactive="true"
+                onClick={() => { setSubView(v.id); setActiveSkill(null); setActiveFlow(null); setActiveGovernance(null); setActivePrinciple(null); setHoveredPrinciple(null); }}
+                style={{
+                  background: subView === v.id ? "rgba(52,211,153,0.15)" : "transparent",
+                  border: "none", color: subView === v.id ? "#34d399" : "rgba(255,255,255,0.3)",
+                  padding: "8px 18px", borderRadius: "6px", cursor: "pointer",
+                  fontFamily: "'Space Grotesk', sans-serif", fontSize: "12px", fontWeight: subView === v.id ? 600 : 400,
+                  letterSpacing: "-0.01em", transition: "all 0.3s ease",
+                  boxShadow: subView === v.id ? "0 0 20px -6px rgba(52,211,153,0.2)" : "none",
+                  flex: 1,
+                }}
+              >
+                {v.label}
+                <span className="mono" style={{ display: "block", fontSize: "9px", color: subView === v.id ? "rgba(52,211,153,0.5)" : "rgba(255,255,255,0.12)", marginTop: "3px", letterSpacing: "0.05em" }}>{v.desc}</span>
+              </button>
+            ))}
+          </div>
+
+          {subView === "pyramid" && (
+            <div style={{ animation: "fadeIn 0.3s ease" }}>
+              {!selectedSkill && (
+                <div style={{
+                  marginBottom: "10px", padding: "12px 20px", background: "rgba(255,255,255,0.02)",
+                  border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", textAlign: "center",
+                  fontSize: "11px", color: "rgba(255,255,255,0.2)", fontWeight: 300,
+                }}>Click any skill to see what it produces, consumes, and asks</div>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: selectedSkill ? "1fr 1fr" : "1fr", gap: "16px" }}>
+                <PyramidView activeSkill={activeSkill} onSelect={id => setActiveSkill(activeSkill === id ? null : id)} />
+                {selectedSkill && <SkillDetail skill={selectedSkill} />}
+              </div>
+            </div>
+          )}
+
+          {subView === "flow" && (
+            <div style={{ animation: "fadeIn 0.3s ease" }}>
+              <ArtifactFlow activeConnection={activeFlow} onHover={setActiveFlow} onLeave={() => setActiveFlow(null)} />
+              <IOSummary />
+            </div>
+          )}
+
+          {subView === "governance" && (
+            <div style={{ animation: "fadeIn 0.3s ease" }}>
+              <div style={{ display: "grid", gridTemplateColumns: selectedGovernance ? "1fr 1fr" : "1fr", gap: "16px" }}>
+                <GovernanceView activeItem={activeGovernance} onSelect={id => setActiveGovernance(activeGovernance === id ? null : id)} />
+                {selectedGovernance && <GovernanceDetail item={selectedGovernance} />}
+              </div>
+              {!selectedGovernance && (
+                <div style={{
+                  marginTop: "10px", padding: "12px 20px", background: "rgba(255,255,255,0.02)",
+                  border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", textAlign: "center",
+                  fontSize: "11px", color: "rgba(255,255,255,0.2)", fontWeight: 300,
+                }}>Click any element to see what it governs</div>
+              )}
+            </div>
+          )}
+
+          {subView === "principles" && (
+            <div style={{ animation: "fadeIn 0.3s ease" }}>
+              <div className="glass" style={{
+                padding: "16px 20px", borderRadius: "16px", marginBottom: "16px",
+              }}>
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", textAlign: "center", lineHeight: 1.7, fontStyle: "italic", fontWeight: 300 }}>
+                  Like the managed policy layer in Claude Code {"\u2014"} these cannot be overridden.
+                  Every anti-pattern is a violation of one of these principles.
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {PRINCIPLES.map((p, idx) => {
+                  const isActive = activePrinciple === p.num;
+                  const isHovered = hoveredPrinciple === p.num;
+                  const lit = isActive || isHovered;
+                  return (
+                    <div
+                      key={p.num}
+                      data-interactive="true"
+                      onClick={() => setActivePrinciple(isActive ? null : p.num)}
+                      onMouseEnter={() => setHoveredPrinciple(p.num)}
+                      onMouseLeave={() => setHoveredPrinciple(null)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "14px", padding: "14px 18px",
+                        background: isActive ? "rgba(52,211,153,0.06)" : isHovered ? "rgba(52,211,153,0.03)" : "rgba(255,255,255,0.02)",
+                        border: `1px solid ${isActive ? "rgba(52,211,153,0.25)" : isHovered ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)"}`,
+                        borderRadius: "10px", cursor: "pointer", transition: "all 0.3s ease",
+                      }}
+                    >
+                      <div style={{
+                        width: "36px", height: "36px", borderRadius: "50%",
+                        background: isActive ? "rgba(52,211,153,0.1)" : isHovered ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.03)",
+                        border: `2px solid ${lit ? "#34d399" : "rgba(255,255,255,0.08)"}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0, transition: "all 0.3s",
+                      }}>
+                        <Icon name={PRINCIPLE_ICONS[idx]} size={18} color={lit ? "#34d399" : "rgba(255,255,255,0.2)"} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div className="mono" style={{ fontSize: "9px", color: lit ? "#34d399" : "rgba(255,255,255,0.1)", letterSpacing: "0.1em", marginBottom: "4px", transition: "color 0.3s", textTransform: "uppercase" }}>
+                          PRINCIPLE {p.num}
+                        </div>
+                        <div style={{ fontSize: "13px", fontWeight: 500, color: lit ? "#f5f5f5" : "rgba(255,255,255,0.5)", lineHeight: 1.4, transition: "color 0.3s" }}>
+                          {p.text}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="glass" style={{
+                marginTop: "16px", padding: "18px", borderRadius: "12px", textAlign: "center",
+              }}>
+                <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6, fontWeight: 300 }}>
+                  Don't train your AI.{" "}<span className="text-gradient" style={{ fontWeight: 700 }}>Certify it.</span>
+                </div>
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", marginTop: "6px", fontWeight: 300 }}>
+                  Change a row, change the behaviour. No retraining. No redeployment.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function HeaderCountdown() {
+      const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 });
+
+      useEffect(() => {
+        function calc() {
+          const diff = new Date("2026-08-02T00:00:00Z") - new Date();
+          if (diff <= 0) { setTime({ d: 0, h: 0, m: 0, s: 0 }); return; }
+          setTime({
+            d: Math.floor(diff / 86400000),
+            h: Math.floor((diff % 86400000) / 3600000),
+            m: Math.floor((diff % 3600000) / 60000),
+            s: Math.floor((diff % 60000) / 1000),
+          });
+        }
+        calc();
+        const id = setInterval(calc, 1000);
+        return () => clearInterval(id);
+      }, []);
+
+      return (
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "4px 12px",
+          borderRadius: "999px",
+          background: "rgba(239,68,68,0.08)",
+          border: "1px solid rgba(239,68,68,0.15)",
+        }}>
+          <Icon name="clock" size={12} color="#ef4444" />
+          <span className="mono" style={{ fontSize: "10px", color: "#ef4444", letterSpacing: "0.05em" }}>
+            EU AI Act
+          </span>
+          <span className="mono" style={{ fontSize: "11px", color: "#f5f5f5", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+            {time.d}d {String(time.h).padStart(2,"0")}:{String(time.m).padStart(2,"0")}:{String(time.s).padStart(2,"0")}
+          </span>
+        </div>
+      );
+    }
+
+    function ContactDropdown() {
+      const [open, setOpen] = useState(false);
+      const ref = React.useRef(null);
+
+      useEffect(() => {
+        if (!open) return;
+        function close(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+        document.addEventListener("mousedown", close);
+        return () => document.removeEventListener("mousedown", close);
+      }, [open]);
+
+      return (
+        <div ref={ref} style={{ position: "relative" }}>
+          <button
+            onClick={() => setOpen(!open)}
+            style={{
+              fontSize: "13px",
+              color: open ? "#f5f5f5" : "rgba(255,255,255,0.4)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontWeight: 400,
+              transition: "color 0.2s",
+              padding: 0,
+            }}
+            onMouseEnter={e => e.target.style.color = "#f5f5f5"}
+            onMouseLeave={e => { if (!open) e.target.style.color = "rgba(255,255,255,0.4)"; }}
+          >
+            Contact
+          </button>
+          {open && (
+            <div style={{
+              position: "absolute",
+              top: "calc(100% + 12px)",
+              right: 0,
+              minWidth: "180px",
+              padding: "8px",
+              borderRadius: "12px",
+              background: "rgba(20,20,20,0.95)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              animation: "fadeInUp 0.2s ease",
+              zIndex: 200,
+            }}>
+              <a href="https://www.linkedin.com/in/csabatoldi/" target="_blank" rel="noopener" style={{
+                display: "flex", alignItems: "center", gap: "10px",
+                padding: "10px 12px", borderRadius: "8px",
+                fontSize: "13px", color: "rgba(255,255,255,0.6)",
+                textDecoration: "none", transition: "all 0.2s",
+              }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#f5f5f5"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
+                <Icon name="link" size={14} color="#0a66c2" />
+                LinkedIn
+              </a>
+              <a href="mailto:c@toldi.io" style={{
+                display: "flex", alignItems: "center", gap: "10px",
+                padding: "10px 12px", borderRadius: "8px",
+                fontSize: "13px", color: "rgba(255,255,255,0.6)",
+                textDecoration: "none", transition: "all 0.2s",
+              }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#f5f5f5"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
+                <Icon name="message" size={14} color="#34d399" />
+                Email
+              </a>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ═══════════════════════════════════════════
+    // MAIN
+    // ═══════════════════════════════════════════
+
+    function App() {
+      const [active, setActive] = useState(null);
+      const [loopLit, setLoopLit] = useState(-1);
+      const [view, setView] = useState("hld");
+      function handleClick(id) { setActive(active === id ? null : id); }
+      function handleBackgroundClick(e) { if (e.target === e.currentTarget) setActive(null); }
+
+      useEffect(() => {
+        let step = 0;
+        const id = setInterval(() => {
+          setLoopLit(step % 4);
+          step++;
+        }, 800);
+        return () => clearInterval(id);
+      }, []);
+
+      const configIds = ["steps", "skills", "messages", "functions"];
+      const dataIds = ["session", "datasets", "chat", "audit"];
+      const dbActive = active === "database";
+
+      return (
+        <main onClick={handleBackgroundClick} style={{ minHeight: "100vh", background: "#050505" }}>
+
+          {/* ═══ HEADER / NAV ═══ */}
+          <header style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            padding: "16px 24px",
+            background: "rgba(5,5,5,0.8)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+              position: "relative",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: "0 0 auto" }}>
+                <Icon name="shieldcheck" size={20} color="#34d399" />
+                <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "16px", letterSpacing: "-0.02em", color: "#f5f5f5" }}>
+                  Governed AI
+                </span>
+              </div>
+              <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+                <HeaderCountdown />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "20px", flex: "0 0 auto" }}>
+                <ContactDropdown />
+                <a href="https://01.toldi.io" target="_blank" rel="noopener" style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", textDecoration: "none", fontWeight: 400, transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color = "#f5f5f5"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.4)"}>System 01</a>
+              </div>
+            </div>
+          </header>
+
+          {/* ═══ HERO ═══ */}
+          <div style={{
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "140px 24px 80px",
+            overflow: "hidden",
+          }}>
+            {/* Background glow */}
+            <div style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "700px",
+              height: "700px",
+              background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }} />
+
+            <div style={{ position: "relative", zIndex: 1, maxWidth: "800px", textAlign: "center", animation: "fadeInUp 0.8s ease" }}>
+              <h1 style={{ fontSize: "clamp(40px, 7vw, 80px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 0.95, marginBottom: "24px" }}>
+                <span className="text-gradient">Governed AI</span><br />
+                <span style={{ color: "#f5f5f5" }}>Architecture</span>
+              </h1>
+
+              <p style={{ fontSize: "clamp(16px, 2vw, 24px)", color: "rgba(255,255,255,0.35)", fontWeight: 300, lineHeight: 1.4, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.01em" }}>
+                Structure beats intelligence.{" "}
+                <span style={{ color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>Don't train your AI. Certify it.</span>
+              </p>
+            </div>
+          </div>
+
+          {/* ═══ AUTHORITY ═══ */}
+          <section style={{ padding: "0 24px 80px" }}>
+            <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+              <div className="glass" style={{
+                borderRadius: "24px",
+                padding: "40px 48px",
+                position: "relative",
+                overflow: "hidden",
+              }}>
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "500px",
+                  height: "250px",
+                  background: "radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%)",
+                  pointerEvents: "none",
+                }} />
+
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <p style={{ fontSize: "20px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6, fontWeight: 300, textAlign: "center", marginBottom: "32px" }}>
+                    Claude Code best practices &mdash;{" "}
+                    <span style={{ color: "#f5f5f5", fontWeight: 600 }}>applied to application design.</span>
+                  </p>
+
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr",
+                    gap: "16px",
+                    marginBottom: "32px",
+                  }}>
+                    {[
+                      { label: "Proven pattern", desc: "Anthropic's own configuration model, globally adopted by developers", color: "#60a5fa" },
+                      { label: "Fully local", desc: "Runs on a standalone local database with any LLM \u2014 cloud or local", color: "#34d399" },
+                      { label: "Zero lock-in", desc: "Swap the DB, the LLM, or the project. The architecture holds.", color: "#f59e0b" },
+                    ].map(item => (
+                      <div key={item.label} style={{
+                        padding: "16px",
+                        background: "rgba(255,255,255,0.03)",
+                        borderRadius: "12px",
+                        border: "1px solid rgba(255,255,255,0.06)",
+                      }}>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: item.color, marginBottom: "6px" }}>{item.label}</div>
+                        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", lineHeight: 1.5, fontWeight: 300 }}>{item.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "center", gap: "40px" }}>
+                    {["DB-agnostic", "LLM-agnostic", "Project-agnostic"].map(label => (
+                      <span key={label} className="mono" style={{
+                        fontSize: "14px",
+                        color: "rgba(52,211,153,0.5)",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                      }}>
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ═══ ARCHITECTURE SECTION ═══ */}
+          <section onClick={handleBackgroundClick} style={{
+            padding: "120px 24px",
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            position: "relative",
+          }}>
+            {/* Connector line from hero */}
+            <div style={{
+              position: "absolute",
+              top: 0,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "1px",
+              height: "80px",
+              background: "linear-gradient(180deg, rgba(16,185,129,0.4), transparent)",
+            }} />
+
+            <div style={{ textAlign: "center", marginBottom: "80px" }}>
+              <h2 style={{ fontSize: "clamp(28px, 4vw, 52px)", fontWeight: 700, marginBottom: "16px" }}>
+                One Database.{" "}
+                <span className="text-gradient">Complete Governance.</span>
+              </h2>
+              <p style={{ fontSize: "18px", color: "rgba(255,255,255,0.4)", maxWidth: "600px", margin: "0 auto", fontWeight: 300, lineHeight: 1.6, marginBottom: "32px" }}>
+                Click any component to see how it works.
+              </p>
+
+              <div style={{
+                display: "inline-flex",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(255,255,255,0.03)",
+                padding: "4px",
+                gap: "4px",
+              }}>
+                {[
+                  { id: "hld", label: "HLD" },
+                  { id: "lld", label: "LLD" },
+                ].map(btn => (
+                  <button
+                    key={btn.id}
+                    onClick={() => setView(btn.id)}
+                    style={{
+                      padding: "8px 24px",
+                      borderRadius: "8px",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      letterSpacing: "0.02em",
+                      transition: "all 0.3s ease",
+                      background: view === btn.id ? "rgba(52,211,153,0.15)" : "transparent",
+                      color: view === btn.id ? "#34d399" : "rgba(255,255,255,0.35)",
+                      boxShadow: view === btn.id ? "0 0 20px -6px rgba(52,211,153,0.2)" : "none",
+                    }}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+                <a
+                  href="https://github.com/war851/AI-Governance-Architecture"
+                  target="_blank"
+                  rel="noopener"
+                  style={{
+                    padding: "8px 24px",
+                    borderRadius: "8px",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    letterSpacing: "0.02em",
+                    transition: "all 0.3s ease",
+                    background: "transparent",
+                    color: "rgba(255,255,255,0.35)",
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                  }}
+                >
+                  GitHub
+                </a>
+              </div>
+            </div>
+
+            <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+              {view === "hld" && (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: active ? "1fr 380px" : "1fr",
+                gap: "32px",
+              }}>
+                {/* LEFT: Diagram */}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+
+                  {/* ORCHESTRATOR */}
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    <div style={{ width: "360px" }}>
+                      <ExternalCard id="orchestrator" active={active === "orchestrator"} onClick={handleClick} />
+                    </div>
+                  </div>
+
+                  {/* Connector */}
+                  <div style={{ display: "flex", justifyContent: "center", padding: "6px 0" }}>
+                    <div style={{ width: "1px", height: "24px", background: "linear-gradient(180deg, rgba(56,189,248,0.4), rgba(167,139,250,0.4))" }} />
+                  </div>
+
+                  {/* GOVERNED DATABASE */}
+                  <div
+                    onClick={() => handleClick("database")}
+                    style={{
+                      borderRadius: "20px",
+                      overflow: "hidden",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      border: `1px solid ${dbActive ? "rgba(167,139,250,0.4)" : "rgba(255,255,255,0.08)"}`,
+                      background: "rgba(255,255,255,0.02)",
+                      boxShadow: dbActive ? "0 0 60px -20px rgba(167,139,250,0.2)" : "none",
+                    }}
+                  >
+                    {/* DB Header */}
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                      padding: "18px 20px",
+                      background: "rgba(167,139,250,0.03)",
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    }}>
+                      <Icon name="database" size={20} color={dbActive ? "#a78bfa" : "rgba(255,255,255,0.3)"} />
+                      <span style={{
+                        fontFamily: "'Space Grotesk', sans-serif",
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        color: dbActive ? "#a78bfa" : "rgba(255,255,255,0.6)",
+                        letterSpacing: "-0.01em",
+                        transition: "color 0.3s",
+                      }}>
+                        Governed Database
+                      </span>
+                      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)" }}>&mdash;</span>
+                      <span className="mono" style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                        Single Source of Truth
+                      </span>
+                    </div>
+
+                    {/* Column headers */}
+                    <div onClick={(e) => e.stopPropagation()} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <div style={{ padding: "10px 16px", borderRight: "1px solid rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span className="mono" style={{ fontSize: "10px", fontWeight: 500, color: "#f59e0b", letterSpacing: "0.1em", textTransform: "uppercase" }}>Config</span>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.15)" }}>Behaviour & Logic</span>
+                      </div>
+                      <div style={{ padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span className="mono" style={{ fontSize: "10px", fontWeight: 500, color: "#34d399", letterSpacing: "0.1em", textTransform: "uppercase" }}>Data & State</span>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.15)" }}>Memory & Evolution</span>
+                      </div>
+                    </div>
+
+                    {/* Paired rows */}
+                    {[0, 1, 2, 3].map(i => (
+                      <div key={i} onClick={(e) => e.stopPropagation()} style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                      }}>
+                        <div style={{ borderRight: "1px solid rgba(255,255,255,0.03)" }}>
+                          <DBItem id={configIds[i]} active={active === configIds[i]} onClick={handleClick} />
+                        </div>
+                        <div>
+                          <DBItem id={dataIds[i]} active={active === dataIds[i]} onClick={handleClick} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Connectors down */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", padding: "6px 0" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <div style={{ width: "1px", height: "24px", background: "linear-gradient(180deg, rgba(167,139,250,0.3), rgba(251,191,36,0.4))" }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <div style={{ width: "1px", height: "24px", background: "linear-gradient(180deg, rgba(167,139,250,0.3), rgba(249,115,22,0.4))" }} />
+                    </div>
+                  </div>
+
+                  {/* FILE STORAGE + LLM */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                    <ExternalCard id="files" active={active === "files"} onClick={handleClick} />
+                    <ExternalCard id="llm" active={active === "llm"} onClick={handleClick} />
+                  </div>
+
+                  {/* Prompt labels */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", padding: "4px 0" }}>
+                    <div />
+                    <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
+                      <span className="mono" style={{ fontSize: "9px", color: "rgba(245,158,11,0.5)", letterSpacing: "0.05em" }}>{"\u2193"} Constrained Prompt</span>
+                      <span className="mono" style={{ fontSize: "9px", color: "rgba(52,211,153,0.5)", letterSpacing: "0.05em" }}>{"\u2191"} Structured Output</span>
+                    </div>
+                  </div>
+
+                  {/* Connector to loop */}
+                  <div style={{ display: "flex", justifyContent: "center", padding: "6px 0" }}>
+                    <div style={{ width: "1px", height: "24px", background: "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(192,132,252,0.4))" }} />
+                  </div>
+
+                  {/* ORCHESTRATION LOOP */}
+                  <div
+                    onClick={() => handleClick("loop")}
+                    style={{
+                      padding: "18px 20px",
+                      background: active === "loop" ? "rgba(192,132,252,0.04)" : "rgba(255,255,255,0.02)",
+                      border: `1px solid ${active === "loop" ? "rgba(192,132,252,0.3)" : "rgba(255,255,255,0.06)"}`,
+                      borderRadius: "16px",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "14px" }}>
+                      <Icon name="refresh" size={14} color={active === "loop" ? "#c084fc" : "rgba(255,255,255,0.25)"} />
+                      <span className="mono" style={{
+                        fontSize: "10px",
+                        fontWeight: 500,
+                        color: active === "loop" ? "#c084fc" : "rgba(255,255,255,0.25)",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        transition: "color 0.3s",
+                      }}>
+                        Orchestration Loop
+                      </span>
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()} style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto 1fr auto 1fr", alignItems: "center" }}>
+                      {(() => {
+                        const steps = [
+                          { label: "Load", sublabel: "Fetch Step + Data", color: "#a78bfa" },
+                          { label: "Build", sublabel: "Assemble Prompt", color: "#f472b6" },
+                          { label: "Execute", sublabel: "Stateless LLM Call", color: "#f97316" },
+                          { label: "Store", sublabel: "Save + Next Step", color: "#34d399" },
+                        ];
+                        return steps.map((s, i) => (
+                          <React.Fragment key={s.label}>
+                            <LoopStep label={s.label} sublabel={s.sublabel} color={s.color} active={active === "loop"} lit={loopLit === i} />
+                            {i < 3 && (
+                              <div style={{
+                                fontSize: "14px",
+                                color: loopLit === i ? steps[i].color : active === "loop" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)",
+                                padding: "0 6px",
+                                transition: "color 0.4s ease",
+                              }}>{"\u2192"}</div>
+                            )}
+                          </React.Fragment>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT: Detail Panel */}
+                {active && <DetailPanel id={active} />}
+              </div>
+              )}
+
+              {view === "lld" && <SkillEcosystemContent />}
+            </div>
+          </section>
+
+          {/* ═══ FOOTER ═══ */}
+          <footer style={{
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            padding: "32px 24px",
+          }}>
+            <div style={{ maxWidth: "1000px", margin: "0 auto", textAlign: "center" }}>
+              <p className="mono" style={{ fontSize: "10px", color: "rgba(255,255,255,0.12)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                Structure beats intelligence &middot;{" "}
+                <a href="https://www.linkedin.com/pulse/devopracy-csaba-toldi-0tnhf/" target="_blank" rel="noopener" style={{ color: "rgba(255,255,255,0.12)", textDecoration: "none", transition: "color 0.2s" }} onMouseEnter={e => e.target.style.color = "#34d399"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.12)"}>DEVOPRACY</a>
+              </p>
+            </div>
+          </footer>
+        </main>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
