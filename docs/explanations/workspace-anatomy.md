@@ -344,7 +344,7 @@ Canonical source list for extending the configuration:
 
 ## Interactive Visualization (`docs/visualizations/`)
 
-A single interactive HTML file — `Governed AI Architecture.html` — serves as both HLD and LLD:
+A single interactive HTML file — `Interactive Governed AI Architecture.html` — serves as both HLD and LLD:
 
 - **HLD view** — the high-level architecture: DB tables (steps, functions, skills, messages), the Claude Code ↔ DB bridge, and the 6 constitutional principles
 - **LLD view** — the skill ecosystem with four sub-views: The Pyramid (skill hierarchy), The Flow (artifact pipeline), The Governance (DESIGN.md, artifact lifecycle), and The Constitution (principles)

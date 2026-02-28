@@ -2,7 +2,9 @@
 
 > A reusable pattern where a single database owns the process — steps, functions, skills, messages, and data evolution — and the LLM is a stateless semantic engine. Don't train your AI. Certify it.
 
-**[Open Interactive Architecture Diagram](https://war851.github.io/AI-Governance-Architecture/docs/visualizations/Governed%20AI%20Architecture.html)** · [view source](docs/visualizations/Governed%20AI%20Architecture.html)
+![Governed AI Architecture](docs/visualizations/Governed%20AI%20Architecture.png)
+
+**[Open Interactive Architecture Diagram](https://war851.github.io/AI-Governance-Architecture/docs/visualizations/Interactive%20Governed%20AI%20Architecture.html)** · [view source](docs/visualizations/Interactive%20Governed%20AI%20Architecture.html)
 
 ---
 
